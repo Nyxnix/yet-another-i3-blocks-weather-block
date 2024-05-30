@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # i3 block that uses accuweather api
 
 import json
@@ -6,23 +7,32 @@ import math
 import urllib.request
 
 # Check if file exists and init if not
-def where_json(file_name):
-    return os.path.exists(file_name)
+#def where_json(file_name):
+#    return os.path.exists(file_name)
+#
+#if where_json('config.json'):
+#    pass
+#else:
+#    data = {  
+#        'apikey': "API_KEY_HERE",
+#        'tempUnit': "F",
+#        'cityName': "New York"
+#    }
+#    with open('config.json', 'w') as config_file:  
+#        json.dump(data, config_file)
 
-if where_json('config.json'):
-    pass
-else:
-    data = {  
-        'apikey': "Put key here",
+#   put api key here not in config.json.
+#   i3blocks seems to be looking for a file that doesnt exist? idk its being weird
+data = {  
+        'apikey': "API_KEY_HERE",
         'tempUnit': "F",
         'cityName': "New York"
     }
-    with open('config.json', 'w') as config_file:  
-        json.dump(data, config_file)
 
 # Read the config file and request data from api
 with open('config.json', 'r') as f:
-    config = json.load(f)
+#   config = json.load(f) weird json issue with i3blocks, need to fix.
+    config = data
     api_key = config.get('apikey')
     temp_unit = config.get('tempUnit')
     location = urllib.parse.quote(config.get('cityName'))
@@ -44,8 +54,12 @@ if temp_unit == "F":
     unit = temperature.get('Unit')
     text = f"{weather_text} // {value}{unit}"
     print(text)
+
 elif temp_unit == "C":
     temperature = temperature.get('Metric')
-    print(temperature)
+    value = temperature.get('Value')
+    unit = temperature.get('Unit')
+    text = f"{weather_text} // {value}{unit}"
+    print(text)
 else:
     raise Exception("Invalid tempUnit. Use 'F' or 'C'.")
