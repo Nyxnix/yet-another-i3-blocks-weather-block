@@ -1,46 +1,53 @@
 #!/usr/bin/env python3
-# i3 block that uses accuweather api
-
 import json
 import os
-import math
 import urllib.request
 
-# Check if file exists and init if not
-#def where_json(file_name):
-#    return os.path.exists(file_name)
-#
-#if where_json('config.json'):
-#    pass
-#else:
-#    data = {  
-#        'apikey': "API_KEY_HERE",
-#        'tempUnit': "F",
-#        'cityName': "New York"
-#    }
-#    with open('config.json', 'w') as config_file:  
-#        json.dump(data, config_file)
+# check if i3blocks was ran with a SCRIPT_DIR env var, if not pass . so it will still run
+# if you dont run with SCRIPT_DIR env var the config will be next to the i3blocks executable
+# to move it, change the script_dir var on line 14
 
-#   put api key here not in config.json.
-#   i3blocks seems to be looking for a file that doesnt exist? idk its being weird
-data = {  
+if "SCRIPT_DIR" in os.environ:
+    script_dir = f"{os.getenv("SCRIPT_DIR")}/yet-another-i3-blocks-weather-block"
+else:
+    script_dir = "."
+
+# Check if file exists and init if not
+def where_json(file_name):
+    return os.path.exists(file_name)
+
+if where_json(f'{script_dir}/config.json'):
+    pass
+else:
+    data = {
         'apikey': "API_KEY_HERE",
         'tempUnit': "F",
-        'cityName': "New York"
+        'cityName': "New York",
+        'locationKey': ""
     }
+    with open(f'{script_dir}/config.json', 'w') as config_file:  
+        json.dump(data, config_file)
+        print("Enter API key in config.json")
+        exit()
 
-# Read the config file and request data from api
-with open('config.json', 'r') as f:
-#   config = json.load(f) weird json issue with i3blocks, need to fix.
-    config = data
+with open(f'{script_dir}/config.json', 'r') as f:
+    config = json.load(f)
     api_key = config.get('apikey')
     temp_unit = config.get('tempUnit')
     location = urllib.parse.quote(config.get('cityName'))
-weather_data = urllib.request.urlopen(f"http://dataservice.accuweather.com/locations/v1/search?q={location}&apikey={api_key}").read()
-weather_data = json.loads(weather_data.decode('utf-8'))
+    location_key = config.get('locationKey')
 
-# parse data to get location key for next calls
-location_key = weather_data[0].get('Key')
+# check if key is already cached and if not fetch and cache it
+    if location_key == "":
+        weather_data = urllib.request.urlopen(f"http://dataservice.accuweather.com/locations/v1/search?q={location}&apikey={api_key}").read()
+        weather_data = json.loads(weather_data.decode('utf-8'))
+        location_key = weather_data[0].get('Key')
+        config['locationKey'] = location_key
+        with open(f'{script_dir}/config.json', 'w') as config_file:
+            json.dump(config, config_file)
+    else:
+        pass
+
 current_weather = urllib.request.urlopen(f"http://dataservice.accuweather.com/currentconditions/v1/{location_key}?apikey={api_key}").read()
 current_weather = json.loads(current_weather.decode('utf-8'))
 
